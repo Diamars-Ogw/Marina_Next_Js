@@ -44,3 +44,33 @@ Le ZIP `MarinaV2-main.zip` ne contient ni dump SQL de la base active ni fichiers
 
 ## État réel
 Le socle Next.js, le schéma Prisma, les principales pages publiques, la feuille de style et le JavaScript d'origine, une connexion admin et les premières API de gestion des produits sont en place. Les parcours panier/commande/devis/suivi, les modules complets d'administration, l'import des données et les tests visuels comparatifs restent à terminer. Ne pas déployer en production avant ces validations.
+
+## Exporter de données Laravel fourni
+Le fichier `migration/ExportMarinaData.php` est une commande Artisan à copier dans le projet Laravel dans `app/Console/Commands/ExportMarinaData.php`. Depuis la racine de l'ancien projet, lancer :
+
+```bash
+php artisan marina:export-next
+```
+
+La commande crée `storage/app/marina-next-export.zip` (si l'extension PHP ZipArchive est disponible) avec `database.json` et les médias du disque public. Les comptes utilisateurs, mots de passe et abonnements push ne sont pas exportés.
+
+## Import dans la nouvelle base
+Après avoir configuré `.env` avec la base PostgreSQL :
+
+```bash
+npx prisma db push
+node scripts/import-laravel-export.mjs chemin/vers/database.json
+```
+
+Le script importe les tables dans l'ordre des dépendances et remet à niveau les séquences PostgreSQL. Il remet à null les références d'audit vers les anciens comptes Filament : le nouvel accès admin est configuré par variables d'environnement.
+
+## Transfert des photos et vidéos
+Décompresser l'archive exportée pour obtenir le dossier `storage`, puis configurer `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` localement et lancer :
+
+```bash
+node scripts/upload-media.mjs chemin/vers/storage
+```
+
+Créer au préalable le bucket public `marina-media`. Les chemins sont conservés afin que les enregistrements `product_media`, `categories.image_path`, `site_settings.logo_path` et `site_settings.hero_images` continuent de pointer vers les mêmes fichiers.
+
+**Attention :** le JSON contient des données personnelles de clients et des informations de commandes. Le ZIP d'export doit rester privé et être supprimé des appareils partagés après migration.
