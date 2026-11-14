@@ -10,7 +10,8 @@
     "db:studio": "prisma studio",
     "db:import": "node scripts/import-laravel-export.mjs",
     "media:upload": "node scripts/upload-media.mjs",
-    "admin:hash": "node scripts/hash-password.mjs"
+    "admin:hash": "node scripts/hash-password.mjs",
+    "db:seed": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
     "@prisma/client": "6.19.2",
