@@ -1,0 +1,1 @@
+"use client";export default function LogoutButton(){return <button className="admin-logout" onClick={async()=>{await fetch("/api/admin/logout",{method:"POST"});location.href="/admin/login"}}>Se déconnecter</button>}
