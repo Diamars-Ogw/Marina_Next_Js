@@ -74,3 +74,17 @@ node scripts/upload-media.mjs chemin/vers/storage
 Créer au préalable le bucket public `marina-media`. Les chemins sont conservés afin que les enregistrements `product_media`, `categories.image_path`, `site_settings.logo_path` et `site_settings.hero_images` continuent de pointer vers les mêmes fichiers.
 
 **Attention :** le JSON contient des données personnelles de clients et des informations de commandes. Le ZIP d'export doit rester privé et être supprimé des appareils partagés après migration.
+
+## Déploiement gratuit (preview)
+Le frontend Next.js peut être déployé sur Vercel avec l'URL `*.vercel.app`. Pour une application réellement fonctionnelle, il faut aussi une base PostgreSQL et un bucket de stockage persistant. Le dépôt est préparé pour Supabase (PostgreSQL + Storage).
+
+1. Créer un projet Supabase et un bucket public nommé `marina-media`.
+2. Dans Vercel, importer `Diamars-Ogw/Marina_Next_Js` et choisir la branche `rebuild/nextjs`.
+3. Définir les variables du fichier `.env.example` dans Vercel (les secrets ne doivent jamais être committés).
+4. Exécuter `npx prisma db push` sur la base Supabase, puis importer `database.json` et les médias avec les scripts de migration.
+5. Redéployer la branche et tester les pages publiques, le panier, les commandes et l'administration.
+
+Le niveau gratuit évite un coût d'hébergement initial, mais la base et le stockage ont des quotas et limites d'utilisation. L'URL Vercel peut servir à la vidéo de validation; un domaine personnalisé n'est pas nécessaire.
+
+### Variables supplémentaires pour les e-mails
+Les notifications e-mail sont facultatives et utilisent l'API Brevo. Renseigner `BREVO_API_KEY`, `MAIL_FROM_ADDRESS` et `MAIL_FROM_NAME` pour les activer. Sans ces variables, les commandes continuent de fonctionner et les échecs de notification sont consignés.
