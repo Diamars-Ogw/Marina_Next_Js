@@ -19,5 +19,6 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - run: npm audit --omit=dev --audit-level=high
       - run: npx prisma validate
       - run: npm run build
