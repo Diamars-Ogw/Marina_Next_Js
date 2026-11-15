@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  password String
+  rememberToken String? @map("remember_token")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  payments OrderPayment[]
+  changes OrderStatusHistory[]
+  stockMovements StockMovement[]
+  pushSubscriptions PushSubscription[]
+  @@map("users")
+}
+model Category {
+  id Int @id @default(autoincrement())
+  name String
+  slug String @unique
+  description String?
+  imagePath String? @map("image_path")
+  sortOrder Int @default(0) @map("sort_order")
+  isVisible Boolean @default(true) @map("is_visible")
+  products Product[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("categories")
+}
+model Product {
+  id Int @id @default(autoincrement())
+  categoryId Int @map("category_id")
+  category Category @relation(fields:[categoryId],references:[id],onDelete:Restrict)
+  name String
+  slug String @unique
+  summary String?
+  description String?
+  saleMode String @default("stock") @map("sale_mode")
+  price Int?
+  stockQuantity Int? @map("stock_quantity")
+  lowStockThreshold Int @default(2) @map("low_stock_threshold")
+  leadTime String? @map("lead_time")
+  status String @default("draft")
+  isFeatured Boolean @default(false) @map("is_featured")
+  sortOrder Int @default(0) @map("sort_order")
+  seoTitle String? @map("seo_title")
+  seoDescription String? @map("seo_description")
+  media ProductMedia[]
+  orderItems OrderItem[]
+  stockMovements StockMovement[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@index([status,categoryId])
+  @@map("products")
+}
+model ProductMedia {
+  id Int @id @default(autoincrement())
+  productId Int @map("product_id")
+  product Product @relation(fields:[productId],references:[id],onDelete:Cascade)
+  type String @default("image")
+  path String
+  altText String? @map("alt_text")
+  sortOrder Int @default(0) @map("sort_order")
+  isPrimary Boolean @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("product_media")
+}
+model SiteSetting {
+  id Int @id @default(autoincrement())
+  brandName String @default("MARINA Craft") @map("brand_name")
+  tagline String?
+  logoPath String? @map("logo_path")
+  phone String?
+  whatsapp String?
+  email String?
+  address String?
+  instagramUrl String? @map("instagram_url")
+  facebookUrl String? @map("facebook_url")
+  tiktokUrl String? @map("tiktok_url")
+  momoInstructions String? @map("momo_instructions")
+  cashOnDeliveryEnabled Boolean @default(false) @map("cash_on_delivery_enabled")
+  notificationEmail String? @map("notification_email")
+  heroImages Json? @map("hero_images")
+  heroInterval Int @default(6) @map("hero_interval")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("site_settings")
+}
+model DeliveryZone {
+  id Int @id @default(autoincrement())
+  name String
+  fee Int @default(0)
+  leadTime String? @map("lead_time")
+  instructions String?
+  isPickup Boolean @default(false) @map("is_pickup")
+  isActive Boolean @default(true) @map("is_active")
+  sortOrder Int @default(0) @map("sort_order")
+  orders Order[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("delivery_zones")
+}
+model Order {
+  id Int @id @default(autoincrement())
+  reference String @unique
+  trackingCodeHash String @map("tracking_code_hash")
+  type String @default("order")
+  status String @default("new")
+  paymentMode String? @map("payment_mode")
+  customerName String @map("customer_name")
+  phone String
+  whatsapp String?
+  email String?
+  city String
+  address String?
+  customerNotes String? @map("customer_notes")
+  deliveryZoneId Int? @map("delivery_zone_id")
+  deliveryZone DeliveryZone? @relation(fields:[deliveryZoneId],references:[id],onDelete:SetNull)
+  deliveryZoneName String? @map("delivery_zone_name")
+  deliveryFee Int @default(0) @map("delivery_fee")
+  subtotal Int?
+  total Int?
+  internalNotes String? @map("internal_notes")
+  placedAt DateTime @default(now()) @map("placed_at")
+  items OrderItem[]
+  payments OrderPayment[]
+  statusHistory OrderStatusHistory[]
+  stockMovements StockMovement[]
+  notificationLogs NotificationLog[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@index([status,type])
+  @@map("orders")
+}
+model OrderItem {
+  id Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+  order Order @relation(fields:[orderId],references:[id],onDelete:Cascade)
+  productId Int? @map("product_id")
+  product Product? @relation(fields:[productId],references:[id],onDelete:SetNull)
+  productName String @map("product_name")
+  unitPrice Int? @map("unit_price")
+  quantity Int @default(1)
+  lineTotal Int? @map("line_total")
+  size String?
+  color String?
+  details String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("order_items")
+}
+model OrderPayment {
+  id Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+  order Order @relation(fields:[orderId],references:[id],onDelete:Cascade)
+  amount Int
+  method String
+  transactionReference String? @map("transaction_reference")
+  receivedAt DateTime @default(now()) @map("received_at")
+  recordedById Int? @map("recorded_by")
+  recordedBy User? @relation(fields:[recordedById],references:[id],onDelete:SetNull)
+  note String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("order_payments")
+}
+model OrderStatusHistory {
+  id Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+  order Order @relation(fields:[orderId],references:[id],onDelete:Cascade)
+  fromStatus String? @map("from_status")
+  toStatus String @map("to_status")
+  changedById Int? @map("changed_by")
+  changedBy User? @relation(fields:[changedById],references:[id],onDelete:SetNull)
+  comment String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("order_status_histories")
+}
+model StockMovement {
+  id Int @id @default(autoincrement())
+  productId Int @map("product_id")
+  product Product @relation(fields:[productId],references:[id],onDelete:Cascade)
+  orderId Int? @map("order_id")
+  order Order? @relation(fields:[orderId],references:[id],onDelete:SetNull)
+  quantityChange Int @map("quantity_change")
+  reason String
+  note String?
+  createdById Int? @map("created_by")
+  createdBy User? @relation(fields:[createdById],references:[id],onDelete:SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("stock_movements")
+}
+model NotificationLog {
+  id Int @id @default(autoincrement())
+  orderId Int? @map("order_id")
+  order Order? @relation(fields:[orderId],references:[id],onDelete:SetNull)
+  channel String
+  event String
+  recipient String?
+  status String
+  errorMessage String? @map("error_message")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("notification_logs")
+}
+model PushSubscription {
+  id Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  endpointHash String @unique @map("endpoint_hash")
+  endpoint String
+  publicKey String @map("public_key")
+  authToken String @map("auth_token")
+  contentEncoding String @default("aes128gcm") @map("content_encoding")
+  userAgent String? @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("push_subscriptions")
+}
+model HomeSection {
+  id Int @id @default(autoincrement())
+  type String @unique
+  sortOrder Int @default(0) @map("sort_order")
+  isVisible Boolean @default(true) @map("is_visible")
+  content Json?
+  draftContent Json? @map("draft_content")
+  publishedAt DateTime? @map("published_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("home_sections")
+}
+model Page {
+  id Int @id @default(autoincrement())
+  slug String @unique
+  title String
+  content String?
+  isPublished Boolean @default(false) @map("is_published")
+  needsReview Boolean @default(false) @map("needs_review")
+  sortOrder Int @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("pages")
+}
+model Faq {
+  id Int @id @default(autoincrement())
+  question String
+  answer String
+  sortOrder Int @default(0) @map("sort_order")
+  isVisible Boolean @default(true) @map("is_visible")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("faqs")
+}

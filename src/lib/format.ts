@@ -1,0 +1,2 @@
+export function money(n:number|null|undefined){return n==null?"Sur devis":new Intl.NumberFormat("fr-FR").format(n).replace(/\u202f/g,"\u00a0")+"\u00a0FCFA"}
+export function mediaUrl(p?:string|null){if(!p)return"";if(p.startsWith("http://")||p.startsWith("https://"))return p;const base=process.env.NEXT_PUBLIC_SUPABASE_URL,bucket=process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET||"marina-media",clean=p.replace(/^\/+/, "");if(base)return base.replace(/\/$/,"")+"/storage/v1/object/public/"+bucket+"/"+clean;return p.startsWith("/")?p:"/storage/"+clean}
